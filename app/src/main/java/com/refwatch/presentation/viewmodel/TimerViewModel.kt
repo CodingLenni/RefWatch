@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * stops, and then automatically starts an indefinite Additional Time timer.
  */
 class TimerViewModel(
-    gameSettingsRepository: GameSettingsRepository = GameSettingsRepositoryImpl
+    gameSettingsRepository: GameSettingsRepository = GameSettingsRepositoryImpl,
 ) : ViewModel() {
 
     // --- Primary (Match) Timer Exposed State ---

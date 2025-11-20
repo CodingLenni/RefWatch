@@ -36,7 +36,7 @@ fun GameSettingsScreen(
             item {
                 ListHeader {
                     Text(
-                        text = "Spielzeit",
+                        text = "Halbzeitlänge",
                         style = MaterialTheme.typography.titleMedium
                     )
                 }

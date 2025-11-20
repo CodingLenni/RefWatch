@@ -1,13 +1,18 @@
 package com.refwatch.presentation.screen
 
 import TimerViewModel
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Pause
 import androidx.compose.material.icons.sharp.PlayArrow
@@ -17,7 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
@@ -31,6 +36,7 @@ import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.IconButtonColors
+import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -47,6 +53,7 @@ fun TimerScreen(viewModel: TimerViewModel, navController: NavController) {
     val timeLeft by viewModel.timeLeftDuration.collectAsStateWithLifecycle()
     val additionalTime by viewModel.additionalTimeDuration.collectAsStateWithLifecycle()
     val isRunning by viewModel.isRunning.collectAsStateWithLifecycle()
+    val isAdditionalTimeRunning by viewModel.isAdditionalTimeRunning.collectAsStateWithLifecycle()
     val timerInStartPosition by viewModel.timerInStartPosition.collectAsStateWithLifecycle()
 
 
@@ -65,12 +72,13 @@ fun TimerScreen(viewModel: TimerViewModel, navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 RemainingTimeDisplay(timeLeft)
-                OverTimeDisplay(additionalTime)
+                OverTimeDisplay(additionalTime, isAdditionalTimeRunning)
             }
+            Spacer(modifier = Modifier.height(5.dp))
             Row {
+                // play / pause button
                 FilledIconButton(
-                    modifier = Modifier
-                        .padding(top = 10.dp, end = 5.dp),
+                    modifier = Modifier.size(IconButtonDefaults.LargeButtonSize),
                     onClick = {
                         if (isRunning) {
                             viewModel.pauseTimer()
@@ -90,16 +98,26 @@ fun TimerScreen(viewModel: TimerViewModel, navController: NavController) {
                     Icon(
                         imageVector = icon,
                         contentDescription = contentDesc,
+                        modifier = Modifier.size(IconButtonDefaults.LargeIconSize)
                     )
                 }
+                Spacer(modifier = Modifier.size(20.dp))
+                // settings / reset button
+                val buttonColor = IconButtonColors(
+                    MaterialTheme.colorScheme.secondary,
+                    MaterialTheme.colorScheme.onSecondary,
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                )
                 if (timerInStartPosition || isRunning) {
+                    // settings button
                     FilledIconButton(
-                        modifier = Modifier
-                            .padding(top = 10.dp, start = 5.dp),
+                        modifier = Modifier.size(IconButtonDefaults.LargeButtonSize),
                         onClick = {
                             navController.navigate(GAME_SETTINGS_SCREEN_PATH)
                         },
-                        enabled = !isRunning
+                        enabled = !isRunning,
+                        colors = buttonColor
                     ) {
                         val icon =
                             Icons.Sharp.Settings
@@ -107,22 +125,24 @@ fun TimerScreen(viewModel: TimerViewModel, navController: NavController) {
                         Icon(
                             imageVector = icon,
                             contentDescription = contentDesc,
+                            modifier = Modifier.size(IconButtonDefaults.LargeIconSize)
                         )
                     }
                 } else {
+                    // reset button
                     FilledIconButton(
-                        modifier = Modifier
-                            .padding(top = 10.dp, start = 5.dp),
+                        modifier = Modifier.size(IconButtonDefaults.LargeButtonSize),
                         onClick = {
                             viewModel.resetTimer()
                         },
-                        enabled = !isRunning
+                        colors = buttonColor
                     ) {
                         val icon = Icons.Sharp.Replay
                         val contentDesc = "Reset timer"
                         Icon(
                             imageVector = icon,
                             contentDescription = contentDesc,
+                            modifier = Modifier.size(IconButtonDefaults.LargeIconSize)
                         )
                     }
                 }
@@ -171,13 +191,23 @@ fun RemainingTimeDisplay(timeLeft: Duration) {
 }
 
 @Composable
-fun OverTimeDisplay(additionalTime: Duration) {
+fun OverTimeDisplay(additionalTime: Duration, isRunning: Boolean) {
     val totalSeconds = additionalTime.inWholeSeconds
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     val timerText = String.format(Locale.GERMAN, "%02d:%02d", minutes, seconds)
 
-    FixedWidthDurationText(timerText)
+    if (isRunning) {
+        FixedWidthDurationText(
+            timerText,
+            color = MaterialTheme.colorScheme.onSecondary,
+            bgColor = MaterialTheme.colorScheme.secondary
+        )
+    } else {
+        FixedWidthDurationText(
+            timerText,
+        )
+    }
 }
 
 /*
@@ -197,13 +227,20 @@ fun FixedWidthDurationText(
         // though the technique below relies more on fixed-digit formatting.
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.SemiBold
-    )
+    ),
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    bgColor: Color = MaterialTheme.colorScheme.background
 ) {
     Text(
         text = time,
-        modifier = modifier,
+        modifier = modifier
+            .background(
+                color = bgColor,
+                shape = RoundedCornerShape(25)
+            )
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         style = style,
-        color = style.color.takeOrElse { MaterialTheme.colorScheme.onBackground }
+        color = color
     )
 }
 
