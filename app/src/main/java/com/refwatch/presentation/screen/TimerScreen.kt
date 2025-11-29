@@ -1,6 +1,8 @@
 package com.refwatch.presentation.screen
 
-import TimerViewModel
+import android.content.Context
+import android.os.VibrationEffect
+import android.os.VibratorManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,18 +21,23 @@ import androidx.compose.material.icons.sharp.PlayArrow
 import androidx.compose.material.icons.sharp.Replay
 import androidx.compose.material.icons.sharp.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.FilledIconButton
@@ -41,6 +48,8 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
+import com.refwatch.presentation.events.VibrationEvent
+import com.refwatch.presentation.viewmodel.TimerViewModel
 import java.util.Locale
 import kotlin.time.Duration
 
@@ -48,6 +57,7 @@ const val TIMER_SCREEN_PATH = "Timer_Screen"
 
 @Composable
 fun TimerScreen(viewModel: TimerViewModel, navController: NavController) {
+    val context = LocalContext.current
     val halftime by viewModel.halftime.collectAsStateWithLifecycle()
     val elapsedTime by viewModel.playClockTimer.collectAsStateWithLifecycle()
     val timeLeft by viewModel.timeLeftDuration.collectAsStateWithLifecycle()
@@ -55,9 +65,13 @@ fun TimerScreen(viewModel: TimerViewModel, navController: NavController) {
     val isRunning by viewModel.isRunning.collectAsStateWithLifecycle()
     val isAdditionalTimeRunning by viewModel.isAdditionalTimeRunning.collectAsStateWithLifecycle()
     val timerInStartPosition by viewModel.timerInStartPosition.collectAsStateWithLifecycle()
+    val vibrationManager =
+        context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+    val vibrator = vibrationManager.defaultVibrator
+    VibrationEventCollector(viewModel)
 
 
-    AppScaffold() {
+    AppScaffold {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,8 +95,20 @@ fun TimerScreen(viewModel: TimerViewModel, navController: NavController) {
                     modifier = Modifier.size(IconButtonDefaults.LargeButtonSize),
                     onClick = {
                         if (isRunning) {
+                            vibrator.vibrate(
+                                VibrationEffect.createOneShot(
+                                    100,
+                                    VibrationEffect.DEFAULT_AMPLITUDE
+                                )
+                            )
                             viewModel.pauseTimer()
                         } else {
+                            vibrator.vibrate(
+                                VibrationEffect.createOneShot(
+                                    50,
+                                    VibrationEffect.DEFAULT_AMPLITUDE
+                                )
+                            )
                             viewModel.startTimer()
                         }
                     },
@@ -173,7 +199,7 @@ fun PlayClockDisplay(
         modifier = Modifier.clickable(
             enabled = !isRunning && timerInStartPosition,
             onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                haptic.performHapticFeedback(HapticFeedbackType.Reject)
                 viewModel.switchPeriod()
             },
         )
@@ -245,9 +271,32 @@ fun FixedWidthDurationText(
 }
 
 @Composable
+fun VibrationEventCollector(
+    timerViewModel: TimerViewModel,
+) {
+    val context = LocalContext.current
+    val vibrationManager =
+        context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+    val vibrator = vibrationManager.defaultVibrator
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner, timerViewModel) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            timerViewModel.vibrationEvents.collect { event ->
+                val (duration, amplitude) = when (event) {
+                    is VibrationEvent.ShortPulse -> event.durationMs to event.amplitude
+                    is VibrationEvent.LongPulse -> event.durationMs to event.amplitude
+                }
+                val effect =
+                    VibrationEffect.createOneShot(duration, amplitude)
+                vibrator.vibrate(effect)
+            }
+        }
+    }
+}
+
+@Composable
 @WearPreviewDevices
 fun PreviewTimerScreen() {
     val navController = rememberSwipeDismissableNavController()
-    val viewModel = TimerViewModel();
-    TimerScreen(viewModel, navController)
+    TimerScreen(TimerViewModel(), navController)
 }

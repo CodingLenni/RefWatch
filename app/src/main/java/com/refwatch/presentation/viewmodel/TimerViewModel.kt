@@ -1,13 +1,19 @@
+package com.refwatch.presentation.viewmodel
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.refwatch.data.GameSettingsRepository
 import com.refwatch.data.GameSettingsRepositoryImpl
+import com.refwatch.presentation.events.VibrationEvent
 import com.refwatch.presentation.model.GameSettings
 import com.refwatch.presentation.model.Halftime
 import com.refwatch.presentation.model.Period
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,6 +84,14 @@ class TimerViewModel(
     private val _isAdditionalTimeRunning = MutableStateFlow(false)
     val isAdditionalTimeRunning: StateFlow<Boolean> = _isAdditionalTimeRunning.asStateFlow()
 
+    // haptic events
+    private val _vibrationEvents = MutableSharedFlow<VibrationEvent>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val vibrationEvents: SharedFlow<VibrationEvent> = _vibrationEvents
+
+
     val isRunning = combine(
         isPrimaryTimerRunning,
         isAdditionalTimeRunning
@@ -141,7 +155,8 @@ class TimerViewModel(
 
                 // Check for target completion
                 if (currentTotalDuration >= currentTarget) {
-                    // TARGET REACHED: Stop primary, start additional time
+                    // TARGET REACHED
+                    _vibrationEvents.emit(VibrationEvent.LongPulse())
                     _elapsedTimeDuration.value = currentTarget
                     _timeLeftDuration.value = Duration.ZERO
                     accumulatedDuration = currentTarget
