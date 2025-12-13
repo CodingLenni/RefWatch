@@ -2,7 +2,6 @@ package com.refwatch.presentation.model
 
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 object GameSettings {
     const val FIRST_HALF_TEXT: String = "1. Halbzeit"
@@ -32,11 +31,11 @@ object GameSettings {
             Halftime(30.minutes, 30.minutes, SECOND_HALF_TEXT, Period.SECOND),
             "D - Jugend"
         ),
-        Game(
-            Halftime(Duration.ZERO, 10.seconds, FIRST_HALF_TEXT, Period.FIRST),
-            Halftime(10.seconds, 10.seconds, SECOND_HALF_TEXT, Period.SECOND),
-            "For Testing"
-        ),
+//        Game(
+//            Halftime(Duration.ZERO, 10.seconds, FIRST_HALF_TEXT, Period.FIRST),
+//            Halftime(10.seconds, 10.seconds, SECOND_HALF_TEXT, Period.SECOND),
+//            "For Testing"
+//        ),
     )
 
     /**
