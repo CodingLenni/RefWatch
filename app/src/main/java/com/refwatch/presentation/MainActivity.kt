@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -15,8 +14,6 @@ import com.refwatch.presentation.screen.GameSettingsScreen
 import com.refwatch.presentation.screen.TIMER_SCREEN_PATH
 import com.refwatch.presentation.screen.TimerScreen
 import com.refwatch.presentation.theme.RefwatchTheme
-import com.refwatch.presentation.viewmodel.GameSettingsViewModel
-import com.refwatch.presentation.viewmodel.TimerViewModel
 
 class MainActivity : ComponentActivity() {
 

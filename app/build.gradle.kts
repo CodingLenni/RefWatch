@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.refwatch"
+    namespace = "app.refwatch"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.refwatch"
+        applicationId = "app.refwatch"
         minSdk = 30
         targetSdk = 36
         versionCode = 361000100
