@@ -14,7 +14,7 @@ android {
         applicationId = "app.refwatch"
         minSdk = 30
         targetSdk = 36
-        versionCode = 361000100
+        versionCode = 361000101
         versionName = "1.0.0"
 
     }
